@@ -1,216 +1,88 @@
-# m5rcel’s Redeemer
+# m5rcel's Redeemer
 
-A minimalistic, dark, aesthetic redeem-code web app made by m5rcel.
-
-Users enter a redeem code, submit it, hear a short success sound, and then see an animated “Code Redeemed Successfully” screen.
-
-This build includes the uploaded sound as:
-
-```txt
-public/success.mp3
-```
+A minimal, self-hosted gift-code redemption app. Users enter a code, the Node.js backend validates and redeems it once in SQLite, a local success sound plays, and the page transitions into an animated success screen.
 
 ## Features
 
-- Vite + TypeScript frontend
-- Cloudflare Pages Functions support
-- Vercel Serverless Functions support
-- Protected admin code-generation endpoint
-- `ADMIN_SECRET` stays server-side only
-- One-time redeem codes
-- Cryptographically secure code generation
-- Case-insensitive redeeming
-- Server-side validation
-- Cloudflare KV support
-- Vercel KV support
-- In-memory local fallback for development
-- Smooth responsive UI
-- Success sound waits until the audio ends before showing the final animation
+- Dark, responsive Vite frontend with no public admin panel.
+- Fastify backend with TypeScript.
+- SQLite storage in a persistent Docker volume at `/data/redeemer.sqlite`.
+- Cryptographically secure backend-only code generation.
+- Single-use, case-insensitive, server-normalized redeem codes.
+- Protected admin generation endpoint using `Authorization: Bearer ...`.
+- Rate-limited public redeem endpoint.
+- Security headers via Helmet.
+- Docker Compose deployment on Alpine-based Node.js 22.
 
-## Install
+## Requirements
 
-```bash
-npm install
-```
+- Docker
+- Docker Compose
+- An Alpine Linux server or any host capable of running Docker
 
-## Build
+## Configuration
 
-```bash
-npm run build
-```
-
-## Run frontend locally
-
-```bash
-npm run dev
-```
-
-For backend routes, use Cloudflare Pages dev or Vercel dev.
-
-## Environment variables
-
-Copy the example:
+The backend loads environment variables from `.env` for local runs and from Docker Compose environment values in production. `.env` is ignored by Git and must not be committed.
 
 ```bash
 cp .env.example .env
 ```
 
-Set:
+Required variables:
 
 ```env
-ADMIN_SECRET=replace-with-a-long-random-secret
+NODE_ENV=production
+PORT=3000
+ADMIN_SECRET=change-this-secret
+DB_PATH=/data/redeemer.sqlite
 ```
 
-Generate a strong secret:
+Set a long random `ADMIN_SECRET`. The secret must only exist in environment variables or be typed manually by the admin when generating codes. Never put it in frontend source files, HTML, CSS, browser localStorage, public config files, screenshots, or client-side JavaScript.
+
+Important variables:
+
+- `PORT`: app port, defaults to `3000`.
+- `ADMIN_SECRET`: required for `/api/admin/generate`.
+- `DB_PATH`: SQLite file path, defaults to `/data/redeemer.sqlite` in Docker.
+- `TRUST_PROXY`: set to `true` only when the app is reachable exclusively through a trusted reverse proxy.
+
+## Run On Alpine Linux With Docker Compose
+
+On the Alpine server, install Docker and the Docker Compose plugin, clone or copy this project, set a real `ADMIN_SECRET` in `docker-compose.yml` or your deployment environment, then start the app:
 
 ```bash
-openssl rand -base64 48
+docker compose up -d --build
 ```
 
-Never put `ADMIN_SECRET` in frontend code, HTML, CSS, browser storage, public config, or commits.
+The app will be available at:
 
-## Cloudflare Pages deployment
-
-Cloudflare Pages settings:
-
-```txt
-Build command: npm run build
-Build output directory: dist
+```text
+http://localhost:3000
 ```
 
-Add environment variable:
+View logs:
 
-```txt
-ADMIN_SECRET
+```bash
+docker compose logs -f
 ```
 
-Create a Cloudflare KV namespace and bind it to your Pages project with the exact binding name:
+Rebuild after changes:
 
-```txt
-CODES_KV
+```bash
+docker compose up -d --build
 ```
 
-Cloudflare Pages Functions will use:
+Stop:
 
-```txt
-functions/api/redeem.ts
-functions/api/admin/generate.ts
+```bash
+docker compose down
 ```
 
-## Vercel deployment
+## Generate Redeem Codes
 
-Vercel settings:
+Codes are generated only by the backend. The frontend never generates codes and never receives the admin secret.
 
-```txt
-Build command: npm run build
-Output directory: dist
-```
-
-Add environment variable:
-
-```txt
-ADMIN_SECRET
-```
-
-Create and connect Vercel KV so these exist:
-
-```txt
-KV_REST_API_URL
-KV_REST_API_TOKEN
-```
-
-Vercel will use:
-
-```txt
-api/redeem.ts
-api/admin/generate.ts
-```
-
-## GitHub Pages note
-
-GitHub Pages can only host the static frontend. It cannot securely run `/api/redeem` or `/api/admin/generate` by itself.
-
-Use GitHub Pages only if the API is hosted separately on Cloudflare Pages Functions, Vercel, Workers, or another secure backend provider.
-
-Never put the admin secret in frontend JavaScript.
-
-## API
-
-### Redeem code
-
-`POST /api/redeem`
-
-Body:
-
-```json
-{
-  "code": "M5R-8F3K-Q2LX-Z9PA"
-}
-```
-
-Success:
-
-```json
-{
-  "ok": true,
-  "message": "Code redeemed successfully."
-}
-```
-
-Errors:
-
-```json
-{
-  "ok": false,
-  "error": "INVALID_CODE"
-}
-```
-
-Possible errors:
-
-- `MALFORMED_CODE`
-- `INVALID_CODE`
-- `ALREADY_REDEEMED`
-- `EXPIRED_CODE`
-- `RATE_LIMITED`
-- `SERVER_ERROR`
-
-### Generate codes
-
-`POST /api/admin/generate`
-
-Requires:
-
-```http
-Authorization: Bearer YOUR_ADMIN_SECRET
-```
-
-Body:
-
-```json
-{
-  "amount": 5,
-  "expiresInHours": 24,
-  "note": "test drop"
-}
-```
-
-Response:
-
-```json
-{
-  "ok": true,
-  "codes": [
-    "M5R-8F3K-Q2LX-Z9PA"
-  ]
-}
-```
-
-`amount` defaults to `1` and is capped at `100`.
-
-## Generate codes from browser DevTools
-
-Open DevTools Console on your deployed site and paste:
+Browser DevTools example:
 
 ```js
 fetch("/api/admin/generate", {
@@ -227,83 +99,212 @@ fetch("/api/admin/generate", {
 }).then(r => r.json()).then(console.log)
 ```
 
-The secret must only be typed manually by the admin. Do not store it in frontend code.
-
-## Generate codes with curl
+curl example:
 
 ```bash
-curl -X POST "https://your-domain.example/api/admin/generate" \
+curl -X POST http://localhost:3000/api/admin/generate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_SECRET_HERE" \
   -d '{"amount":5,"expiresInHours":24,"note":"test drop"}'
 ```
 
-## Storage
+Request fields:
 
-Stored records look like:
+- `amount`: optional, defaults to `1`, maximum `100`.
+- `expiresInHours`: optional positive number.
+- `note`: optional admin note, stored in SQLite.
 
-```ts
+Successful response:
+
+```json
 {
-  code: string;
-  createdAt: string;
-  expiresAt?: string;
-  redeemed: boolean;
-  redeemedAt?: string;
-  redeemedBy?: string;
-  note?: string;
+  "ok": true,
+  "codes": ["M5R-8F3K-Q2LX-Z9PA"]
 }
 ```
 
-Storage adapters are in:
+## Redeem Codes
 
-```txt
-server/storage.ts
+Public endpoint:
+
+```http
+POST /api/redeem
+Content-Type: application/json
 ```
 
-Included adapters:
+```json
+{
+  "code": "M5R-XXXX-XXXX-XXXX"
+}
+```
 
-- Cloudflare KV
-- Vercel KV
-- In-memory local fallback
+Codes are trimmed, uppercased, stripped of accidental whitespace, validated server-side, and can be redeemed once. Successful redemption writes `redeemed = 1`, `redeemed_at`, and `redeemed_ip` to SQLite, so the same code stays unusable after page refreshes, browser restarts, server restarts, Docker container restarts, and redeploys that keep the Docker volume.
 
-## Replace success sound
+## Replace The Success Sound
 
 Replace:
 
-```txt
+```text
 public/success.mp3
 ```
 
-with any short MP3.
+Then rebuild:
 
-The current file is your uploaded `why-did-u-redeem-it.mp3`, renamed to `success.mp3` for the app.
+```bash
+docker compose up -d --build
+```
+
+The file is served by the app at `/success.mp3`. A compatibility path also exists at `/public/success.mp3`.
+
+If the file is missing or the browser cannot play it, the app skips the sound and still shows the success animation. If autoplay is blocked, the user sees `Tap to continue`.
+
+## SQLite Storage
+
+Docker Compose stores the database at:
+
+```text
+/data/redeemer.sqlite
+```
+
+inside the container, backed by the `redeemer-data` Docker volume. Codes persist after container restarts.
+
+The app initializes this table automatically:
+
+```sql
+CREATE TABLE IF NOT EXISTS redeem_codes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL,
+  expires_at TEXT,
+  redeemed INTEGER NOT NULL DEFAULT 0,
+  redeemed_at TEXT,
+  redeemed_ip TEXT,
+  note TEXT
+);
+```
+
+Back up the volume:
+
+```bash
+docker run --rm \
+  -v m5rcel-redeemer_redeemer-data:/data \
+  -v "$PWD":/backup \
+  alpine sh -c 'cp /data/redeemer.sqlite /backup/redeemer.sqlite.backup'
+```
+
+If your Compose project name differs, list volumes with:
+
+```bash
+docker volume ls
+```
+
+## Reverse Proxy
+
+Caddy example:
+
+```caddy
+redeemer.example.com {
+  reverse_proxy 127.0.0.1:3000
+}
+```
+
+Nginx example:
+
+```nginx
+server {
+  listen 80;
+  server_name redeemer.example.com;
+
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+```
+
+When using a trusted reverse proxy and no direct public access to the app port, you may set:
+
+```env
+TRUST_PROXY=true
+```
+
+## Security Notes
+
+- `ADMIN_SECRET` is read only by the backend from environment variables.
+- The admin endpoint returns `401` for missing or incorrect authorization without revealing the configured secret.
+- The admin token is compared using a timing-safe hash comparison.
+- CORS is not enabled by default.
+- Request bodies are size-limited.
+- Public redeem attempts are rate-limited in memory per running container.
+- `.env` is ignored by Git; `.env.example` contains only safe placeholders.
+- Do not expose the Docker volume or SQLite file publicly.
 
 ## Troubleshooting
 
-### Cloudflare build fails with TypeScript null errors
+Check health:
 
-This fixed version uses a `mustQuery()` helper in `src/main.ts`, so strict DOM null checks pass.
+```bash
+curl http://localhost:3000/healthz
+```
 
-### Admin endpoint returns 401
+Expected response:
 
-Check:
+```json
+{
+  "ok": true
+}
+```
 
-- `ADMIN_SECRET` exists in your host settings.
-- The header is exactly `Authorization: Bearer YOUR_SECRET`.
-- You redeployed after adding the secret.
+Check logs:
 
-### Codes disappear locally
+```bash
+docker compose logs -f
+```
 
-The in-memory development store resets when the serverless dev process restarts. Use Cloudflare KV or Vercel KV for real persistence.
+If admin generation returns `401`, verify that the `Authorization` header is exactly:
 
-### Success sound does not play
+```http
+Authorization: Bearer YOUR_SECRET_HERE
+```
 
-Browsers sometimes block audio until user interaction. The app shows a **Tap to continue** button if needed.
+If codes disappear after restart, confirm the Compose volume is mounted:
 
-### Cloudflare says CODES_KV is missing
+```bash
+docker compose config
+```
 
-Bind the KV namespace with the exact name:
+## Local Development
 
-```txt
-CODES_KV
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run tests:
+
+```bash
+npm test
+```
+
+Build:
+
+```bash
+npm run build
+```
+
+Run locally after build using `.env`:
+
+```bash
+DB_PATH=./data/redeemer.sqlite PORT=3000 npm start
+```
+
+For local development with watch mode:
+
+```bash
+ADMIN_SECRET=your-local-secret npm run dev
 ```

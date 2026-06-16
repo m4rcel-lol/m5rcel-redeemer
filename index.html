@@ -3,67 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#080a12" />
-    <meta name="description" content="m5rcel’s Redeemer - a minimal redeem code app." />
-    <title>m5rcel’s Redeemer</title>
+    <meta
+      name="description"
+      content="Redeem a code with m5rcel&rsquo;s Redeemer."
+    />
+    <title>m5rcel&rsquo;s Redeemer</title>
   </head>
   <body>
-    <main id="app" class="app-shell">
-      <section class="redeem-card" aria-labelledby="page-title">
-        <div class="brand-pill">m5rcel</div>
-
-        <h1 id="page-title">m5rcel’s Redeemer</h1>
-        <p class="subtitle">Enter your code below to unlock your reward.</p>
-
-        <form id="redeem-form" class="redeem-form" autocomplete="off" novalidate>
-          <label for="code-input">Redeem code</label>
-
-          <div class="input-wrap">
-            <input
-              id="code-input"
-              name="code"
-              inputmode="text"
-              spellcheck="false"
-              maxlength="22"
-              placeholder="M5R-8F3K-Q2LX-Z9PA"
-              aria-describedby="status-message"
-              required
-            />
-          </div>
-
-          <button id="redeem-button" type="submit">
-            <span class="button-text">Redeem Code</span>
-            <span class="spinner" aria-hidden="true"></span>
-          </button>
-
-          <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
-        </form>
-
-        <div id="tap-to-continue" class="tap-panel" hidden>
-          <p>Your code is valid. Tap below to finish the redemption sound.</p>
-          <button type="button" id="tap-button">Tap to continue</button>
-        </div>
-
-        <footer>made by m5rcel</footer>
-      </section>
-
-      <section id="success-screen" class="success-screen" hidden aria-live="polite">
-        <div class="success-card">
-          <div class="particle-field" aria-hidden="true"></div>
-
-          <div class="checkmark-wrap" aria-hidden="true">
-            <svg class="checkmark" viewBox="0 0 64 64">
-              <circle cx="32" cy="32" r="28"></circle>
-              <path d="M19 33.5 28.2 43 46 23"></path>
-            </svg>
-          </div>
-
-          <h2>Code Redeemed Successfully</h2>
-          <p>Thank you for redeeming your code.</p>
-        </div>
-      </section>
-    </main>
-
-    <script type="module" src="/src/main.ts"></script>
+    <div id="app"></div>
+    <script type="module" src="/src/client/main.ts"></script>
   </body>
 </html>

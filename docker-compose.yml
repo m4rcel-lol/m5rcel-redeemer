@@ -1,0 +1,17 @@
+services:
+  redeemer:
+    build: .
+    container_name: m5rcels-redeemer
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      ADMIN_SECRET: change-this-secret
+      DB_PATH: /data/redeemer.sqlite
+    volumes:
+      - redeemer-data:/data
+
+volumes:
+  redeemer-data:
