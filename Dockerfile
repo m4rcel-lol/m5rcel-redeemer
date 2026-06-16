@@ -18,7 +18,7 @@ RUN npm ci --omit=dev
 
 FROM node:22-alpine AS runtime
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=10513
 ENV DB_PATH=/data/redeemer.sqlite
 WORKDIR /app
 
@@ -33,9 +33,9 @@ COPY --from=build --chown=redeemer:redeemer /app/dist ./dist
 COPY --from=build --chown=redeemer:redeemer /app/package.json ./package.json
 
 USER redeemer
-EXPOSE 3000
+EXPOSE 10513
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || '3000') + '/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+  CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || '10513') + '/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 CMD ["node", "dist/server/index.js"]

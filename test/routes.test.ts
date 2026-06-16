@@ -23,6 +23,19 @@ describe("HTTP routes", () => {
     await app.close();
   });
 
+  it("does not force HTTPS-only browser isolation headers for direct HTTP use", async () => {
+    const app = await createTestServer();
+    const response = await app.inject({ method: "GET", url: "/healthz" });
+    const csp = response.headers["content-security-policy"];
+
+    expect(response.headers["cross-origin-opener-policy"]).toBeUndefined();
+    expect(response.headers["origin-agent-cluster"]).toBeUndefined();
+    expect(typeof csp === "string" ? csp : "").not.toContain(
+      "upgrade-insecure-requests"
+    );
+    await app.close();
+  });
+
   it("protects admin generation and redeems valid codes once", async () => {
     const app = await createTestServer();
 

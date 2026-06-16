@@ -20,7 +20,7 @@ type BuildServerOptions = {
   trustProxy?: boolean;
 };
 
-const DEFAULT_PORT = 3000;
+const DEFAULT_PORT = 10513;
 const DEFAULT_BODY_LIMIT_BYTES = 10 * 1024;
 const REDEEM_RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const REDEEM_RATE_LIMIT_MAX_ATTEMPTS = 8;
@@ -59,7 +59,15 @@ export async function buildServer(
     });
   });
 
-  await app.register(fastifyHelmet);
+  await app.register(fastifyHelmet, {
+    contentSecurityPolicy: {
+      directives: {
+        "upgrade-insecure-requests": null
+      }
+    },
+    crossOriginOpenerPolicy: false,
+    originAgentCluster: false
+  });
   await registerHealthRoutes(app);
   await registerRedeemRoutes(app, {
     storage,

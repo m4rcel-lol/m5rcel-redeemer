@@ -32,7 +32,7 @@ Required variables:
 
 ```env
 NODE_ENV=production
-PORT=3000
+PORT=10513
 ADMIN_SECRET=change-this-secret
 DB_PATH=/data/redeemer.sqlite
 ```
@@ -41,7 +41,7 @@ Set a long random `ADMIN_SECRET`. The secret must only exist in environment vari
 
 Important variables:
 
-- `PORT`: app port, defaults to `3000`.
+- `PORT`: app port, defaults to `10513`.
 - `ADMIN_SECRET`: required for `/api/admin/generate`.
 - `DB_PATH`: SQLite file path, defaults to `/data/redeemer.sqlite` in Docker.
 - `TRUST_PROXY`: set to `true` only when the app is reachable exclusively through a trusted reverse proxy.
@@ -57,7 +57,7 @@ docker compose up -d --build
 The app will be available at:
 
 ```text
-http://localhost:3000
+http://localhost:10513
 ```
 
 View logs:
@@ -102,7 +102,7 @@ fetch("/api/admin/generate", {
 curl example:
 
 ```bash
-curl -X POST http://localhost:3000/api/admin/generate \
+curl -X POST http://localhost:10513/api/admin/generate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_SECRET_HERE" \
   -d '{"amount":5,"expiresInHours":24,"note":"test drop"}'
@@ -204,7 +204,7 @@ Caddy example:
 
 ```caddy
 redeemer.example.com {
-  reverse_proxy 127.0.0.1:3000
+  reverse_proxy 127.0.0.1:10513
 }
 ```
 
@@ -216,7 +216,7 @@ server {
   server_name redeemer.example.com;
 
   location / {
-    proxy_pass http://127.0.0.1:3000;
+    proxy_pass http://127.0.0.1:10513;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -248,7 +248,7 @@ TRUST_PROXY=true
 Check health:
 
 ```bash
-curl http://localhost:3000/healthz
+curl http://localhost:10513/healthz
 ```
 
 Expected response:
@@ -300,7 +300,7 @@ npm run build
 Run locally after build using `.env`:
 
 ```bash
-DB_PATH=./data/redeemer.sqlite PORT=3000 npm start
+DB_PATH=./data/redeemer.sqlite PORT=10513 npm start
 ```
 
 For local development with watch mode:
