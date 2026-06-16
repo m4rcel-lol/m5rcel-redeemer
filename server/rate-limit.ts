@@ -10,7 +10,11 @@ export function isRateLimited(key: string, limit = 12, windowMs = 60_000): boole
   const existing = hits.get(key);
 
   if (!existing || existing.resetAt <= now) {
-    hits.set(key, { count: 1, resetAt: now + windowMs });
+    hits.set(key, {
+      count: 1,
+      resetAt: now + windowMs
+    });
+
     return false;
   }
 

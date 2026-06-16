@@ -11,9 +11,11 @@ export function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
 
 export async function readJson(request: Request): Promise<unknown> {
   const contentType = request.headers.get("content-type") ?? "";
+
   if (!contentType.includes("application/json")) {
     throw new Error("Expected JSON body.");
   }
+
   return request.json();
 }
 

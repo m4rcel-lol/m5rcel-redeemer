@@ -2,8 +2,10 @@ export type RedeemResponse =
   | { ok: true; message: string }
   | { ok: false; error: string };
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+
 export async function redeemCode(code: string): Promise<RedeemResponse> {
-  const response = await fetch("/api/redeem", {
+  const response = await fetch(`${API_BASE_URL}/api/redeem`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -12,6 +14,7 @@ export async function redeemCode(code: string): Promise<RedeemResponse> {
   });
 
   let payload: unknown;
+
   try {
     payload = await response.json();
   } catch {

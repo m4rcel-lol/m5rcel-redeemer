@@ -17,6 +17,7 @@ export async function handleRedeem({ request, storage }: HandlerContext): Promis
     }
 
     const ip = getClientIp(request);
+
     if (isRateLimited(`redeem:${ip}`)) {
       return jsonResponse({ ok: false, error: "RATE_LIMITED" }, { status: 429 });
     }
@@ -51,7 +52,10 @@ export async function handleRedeem({ request, storage }: HandlerContext): Promis
 
     await storage.put(updated);
 
-    return jsonResponse({ ok: true, message: "Code redeemed successfully." });
+    return jsonResponse({
+      ok: true,
+      message: "Code redeemed successfully."
+    });
   } catch {
     return jsonResponse({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
   }
@@ -73,10 +77,15 @@ export async function handleGenerate({ request, storage, adminSecret }: HandlerC
       note?: unknown;
     };
 
-    const amountInput = typeof body.amount === "number" ? body.amount : 1;
+    const amountInput = typeof body.amount === "number" && Number.isFinite(body.amount)
+      ? body.amount
+      : 1;
+
     const amount = Math.max(1, Math.min(100, Math.floor(amountInput)));
 
-    const expiresInHours = typeof body.expiresInHours === "number" && body.expiresInHours > 0
+    const expiresInHours = typeof body.expiresInHours === "number" &&
+      Number.isFinite(body.expiresInHours) &&
+      body.expiresInHours > 0
       ? Math.min(body.expiresInHours, 24 * 365)
       : undefined;
 
@@ -97,9 +106,11 @@ export async function handleGenerate({ request, storage, adminSecret }: HandlerC
 
       while (await storage.get(code)) {
         attempts += 1;
+
         if (attempts > 8) {
           return jsonResponse({ ok: false, error: "CODE_GENERATION_FAILED" }, { status: 500 });
         }
+
         code = generateCode();
       }
 
@@ -114,7 +125,10 @@ export async function handleGenerate({ request, storage, adminSecret }: HandlerC
       codes.push(code);
     }
 
-    return jsonResponse({ ok: true, codes });
+    return jsonResponse({
+      ok: true,
+      codes
+    });
   } catch {
     return jsonResponse({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
   }

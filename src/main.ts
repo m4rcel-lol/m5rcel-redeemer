@@ -2,19 +2,25 @@ import "./style.css";
 import { redeemCode } from "./api-client";
 import { buildParticles, playSuccessSound } from "./animations";
 
-const form = document.querySelector<HTMLFormElement>("#redeem-form");
-const input = document.querySelector<HTMLInputElement>("#code-input");
-const button = document.querySelector<HTMLButtonElement>("#redeem-button");
-const statusMessage = document.querySelector<HTMLParagraphElement>("#status-message");
-const successScreen = document.querySelector<HTMLElement>("#success-screen");
-const redeemCard = document.querySelector<HTMLElement>(".redeem-card");
-const particleField = document.querySelector<HTMLElement>(".particle-field");
-const tapPanel = document.querySelector<HTMLElement>("#tap-to-continue");
-const tapButton = document.querySelector<HTMLButtonElement>("#tap-button");
+function mustQuery<T extends Element>(selector: string): T {
+  const element = document.querySelector<T>(selector);
 
-if (!form || !input || !button || !statusMessage || !successScreen || !redeemCard || !particleField || !tapPanel || !tapButton) {
-  throw new Error("Required DOM nodes are missing.");
+  if (!element) {
+    throw new Error(`Missing required element: ${selector}`);
+  }
+
+  return element;
 }
+
+const form = mustQuery<HTMLFormElement>("#redeem-form");
+const input = mustQuery<HTMLInputElement>("#code-input");
+const button = mustQuery<HTMLButtonElement>("#redeem-button");
+const statusMessage = mustQuery<HTMLParagraphElement>("#status-message");
+const successScreen = mustQuery<HTMLElement>("#success-screen");
+const redeemCard = mustQuery<HTMLElement>(".redeem-card");
+const particleField = mustQuery<HTMLElement>(".particle-field");
+const tapPanel = mustQuery<HTMLElement>("#tap-to-continue");
+const tapButton = mustQuery<HTMLButtonElement>("#tap-button");
 
 const messages: Record<string, string> = {
   INVALID_CODE: "This code does not exist.",
@@ -48,6 +54,7 @@ function clearStatus(): void {
 function showSuccessScreen(): void {
   buildParticles(particleField);
   redeemCard.classList.add("redeem-card--complete");
+
   window.setTimeout(() => {
     redeemCard.hidden = true;
     successScreen.hidden = false;
@@ -83,6 +90,7 @@ form.addEventListener("submit", async (event) => {
   clearStatus();
 
   const code = normalizeInput(input.value);
+
   if (!code) {
     showError("Please enter a redeem code.");
     input.focus();

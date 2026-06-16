@@ -4,17 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#080a12" />
+    <meta name="description" content="m5rcel’s Redeemer - a minimal redeem code app." />
     <title>m5rcel’s Redeemer</title>
   </head>
   <body>
     <main id="app" class="app-shell">
       <section class="redeem-card" aria-labelledby="page-title">
         <div class="brand-pill">m5rcel</div>
+
         <h1 id="page-title">m5rcel’s Redeemer</h1>
         <p class="subtitle">Enter your code below to unlock your reward.</p>
 
         <form id="redeem-form" class="redeem-form" autocomplete="off" novalidate>
           <label for="code-input">Redeem code</label>
+
           <div class="input-wrap">
             <input
               id="code-input"
@@ -47,12 +50,14 @@
       <section id="success-screen" class="success-screen" hidden aria-live="polite">
         <div class="success-card">
           <div class="particle-field" aria-hidden="true"></div>
+
           <div class="checkmark-wrap" aria-hidden="true">
             <svg class="checkmark" viewBox="0 0 64 64">
               <circle cx="32" cy="32" r="28"></circle>
               <path d="M19 33.5 28.2 43 46 23"></path>
             </svg>
           </div>
+
           <h2>Code Redeemed Successfully</h2>
           <p>Thank you for redeeming your code.</p>
         </div>

@@ -2,7 +2,13 @@
 
 A minimalistic, dark, aesthetic redeem-code web app made by m5rcel.
 
-Users enter a redeem code, submit it, hear a short success sound when the code is valid, and then see a polished animated success screen.
+Users enter a redeem code, submit it, hear a short success sound, and then see an animated “Code Redeemed Successfully” screen.
+
+This build includes the uploaded sound as:
+
+```txt
+public/success.mp3
+```
 
 ## Features
 
@@ -13,56 +19,24 @@ Users enter a redeem code, submit it, hear a short success sound when the code i
 - `ADMIN_SECRET` stays server-side only
 - One-time redeem codes
 - Cryptographically secure code generation
-- Case-insensitive code redeeming
+- Case-insensitive redeeming
 - Server-side validation
-- Clean storage abstraction
 - Cloudflare KV support
 - Vercel KV support
 - In-memory local fallback for development
 - Smooth responsive UI
-- Success sound waits until audio ends before showing animation
-- Graceful fallback when audio is blocked or missing
-
-## Project structure
-
-```txt
-m5rcels-redeemer/
-  public/
-    success.mp3
-  src/
-    main.ts
-    style.css
-    api-client.ts
-    animations.ts
-  functions/
-    api/
-      redeem.ts
-      admin/
-        generate.ts
-  api/
-    redeem.ts
-    admin/
-      generate.ts
-  server/
-    storage.ts
-    code.ts
-    auth.ts
-    validation.ts
-    rate-limit.ts
-    handlers.ts
-    types.ts
-  .env.example
-  .gitignore
-  package.json
-  README.md
-  vite.config.ts
-  tsconfig.json
-```
+- Success sound waits until the audio ends before showing the final animation
 
 ## Install
 
 ```bash
 npm install
+```
+
+## Build
+
+```bash
+npm run build
 ```
 
 ## Run frontend locally
@@ -71,29 +45,94 @@ npm install
 npm run dev
 ```
 
-This starts the Vite frontend. For backend routes, use either Cloudflare Pages local dev or Vercel local dev.
+For backend routes, use Cloudflare Pages dev or Vercel dev.
 
 ## Environment variables
 
-Create `.env` from `.env.example`:
+Copy the example:
 
 ```bash
 cp .env.example .env
 ```
 
-Set a strong secret:
+Set:
 
 ```env
 ADMIN_SECRET=replace-with-a-long-random-secret
 ```
 
-Generate a good secret with:
+Generate a strong secret:
 
 ```bash
 openssl rand -base64 48
 ```
 
 Never put `ADMIN_SECRET` in frontend code, HTML, CSS, browser storage, public config, or commits.
+
+## Cloudflare Pages deployment
+
+Cloudflare Pages settings:
+
+```txt
+Build command: npm run build
+Build output directory: dist
+```
+
+Add environment variable:
+
+```txt
+ADMIN_SECRET
+```
+
+Create a Cloudflare KV namespace and bind it to your Pages project with the exact binding name:
+
+```txt
+CODES_KV
+```
+
+Cloudflare Pages Functions will use:
+
+```txt
+functions/api/redeem.ts
+functions/api/admin/generate.ts
+```
+
+## Vercel deployment
+
+Vercel settings:
+
+```txt
+Build command: npm run build
+Output directory: dist
+```
+
+Add environment variable:
+
+```txt
+ADMIN_SECRET
+```
+
+Create and connect Vercel KV so these exist:
+
+```txt
+KV_REST_API_URL
+KV_REST_API_TOKEN
+```
+
+Vercel will use:
+
+```txt
+api/redeem.ts
+api/admin/generate.ts
+```
+
+## GitHub Pages note
+
+GitHub Pages can only host the static frontend. It cannot securely run `/api/redeem` or `/api/admin/generate` by itself.
+
+Use GitHub Pages only if the API is hosted separately on Cloudflare Pages Functions, Vercel, Workers, or another secure backend provider.
+
+Never put the admin secret in frontend JavaScript.
 
 ## API
 
@@ -171,7 +210,7 @@ Response:
 
 ## Generate codes from browser DevTools
 
-Open the deployed site, open DevTools Console, and manually paste:
+Open DevTools Console on your deployed site and paste:
 
 ```js
 fetch("/api/admin/generate", {
@@ -188,7 +227,7 @@ fetch("/api/admin/generate", {
 }).then(r => r.json()).then(console.log)
 ```
 
-The secret must only be typed manually by the admin. Do not store it in frontend JavaScript, HTML, CSS, localStorage, sessionStorage, or public files.
+The secret must only be typed manually by the admin. Do not store it in frontend code.
 
 ## Generate codes with curl
 
@@ -199,58 +238,9 @@ curl -X POST "https://your-domain.example/api/admin/generate" \
   -d '{"amount":5,"expiresInHours":24,"note":"test drop"}'
 ```
 
-## Redeem codes
-
-A user enters a code on the main page and clicks **Redeem Code**.
-
-If valid:
-
-1. The backend marks the code as redeemed.
-2. The frontend plays `/success.mp3`.
-3. After the audio ends, the success animation appears.
-
-Invalid, expired, malformed, already-used, server, and network errors are shown inside the card without `alert()`.
-
 ## Storage
 
-The backend uses `server/storage.ts`.
-
-Storage adapters included:
-
-- `createCloudflareKvStorage`
-- `createVercelKvStorage`
-- `createMemoryStorage`
-
-### Cloudflare storage
-
-Use Cloudflare KV.
-
-Bind a KV namespace named:
-
-```txt
-CODES_KV
-```
-
-The app stores records under keys like:
-
-```txt
-code:M5R-8F3K-Q2LX-Z9PA
-```
-
-### Vercel storage
-
-Use Vercel KV.
-
-After creating Vercel KV, Vercel injects:
-
-```env
-KV_REST_API_URL=
-KV_REST_API_TOKEN=
-```
-
-If those are missing, the Vercel API falls back to in-memory storage, which is only suitable for local development.
-
-### Stored code record
+Stored records look like:
 
 ```ts
 {
@@ -264,75 +254,19 @@ If those are missing, the Vercel API falls back to in-memory storage, which is o
 }
 ```
 
-## Cloudflare Pages deployment
-
-1. Push this project to GitHub.
-2. Create a Cloudflare Pages project.
-3. Build command:
-
-```bash
-npm run build
-```
-
-4. Build output directory:
+Storage adapters are in:
 
 ```txt
-dist
+server/storage.ts
 ```
 
-5. Add environment variable:
+Included adapters:
 
-```txt
-ADMIN_SECRET
-```
+- Cloudflare KV
+- Vercel KV
+- In-memory local fallback
 
-6. Create a KV namespace.
-7. Bind it to the Pages project as:
-
-```txt
-CODES_KV
-```
-
-8. Deploy.
-
-Cloudflare Pages Functions automatically use the files inside `functions/`.
-
-## Vercel deployment
-
-1. Push this project to GitHub.
-2. Import it into Vercel.
-3. Add environment variable:
-
-```txt
-ADMIN_SECRET
-```
-
-4. Create Vercel KV and connect it to the project.
-5. Build command:
-
-```bash
-npm run build
-```
-
-6. Output directory:
-
-```txt
-dist
-```
-
-7. Deploy.
-
-Vercel automatically uses the files inside `api/`.
-
-## GitHub Pages note
-
-GitHub Pages can only host the static frontend. It cannot securely run the protected `/api/admin/generate` backend by itself.
-
-You can use GitHub Pages only if the API endpoints are hosted separately on Cloudflare Workers, Cloudflare Pages Functions, Vercel, Netlify Functions, or another secure backend provider.
-
-Never fake the admin endpoint in frontend JavaScript, because that would expose the secret and allow anyone to generate codes.
-
-## Replace the success sound
+## Replace success sound
 
 Replace:
 
@@ -340,53 +274,35 @@ Replace:
 public/success.mp3
 ```
 
-with your own short MP3 file.
+with any short MP3.
 
-Keep it short, ideally under 2 seconds.
-
-If the file is missing or the browser cannot play it, the app skips directly to the success animation. If autoplay is blocked, it shows a **Tap to continue** button.
-
-## Security notes
-
-- Code generation happens only server-side.
-- Redeem validation happens only server-side.
-- Codes are normalized by trimming, uppercasing, and removing spaces.
-- Admin secret is checked with a constant-time-ish comparison.
-- Bad admin auth returns HTTP `401`.
-- Redeem attempts are lightly rate-limited in memory.
-- Internal stack traces are never returned to the client.
-- `.env` is ignored by Git.
-- Do not rely on frontend validation for security.
+The current file is your uploaded `why-did-u-redeem-it.mp3`, renamed to `success.mp3` for the app.
 
 ## Troubleshooting
 
-### The admin endpoint returns 401
+### Cloudflare build fails with TypeScript null errors
 
-Check that:
+This fixed version uses a `mustQuery()` helper in `src/main.ts`, so strict DOM null checks pass.
 
-- `ADMIN_SECRET` is set in your hosting provider.
-- The request header is exactly `Authorization: Bearer YOUR_SECRET`.
-- You redeployed after adding the environment variable.
+### Admin endpoint returns 401
+
+Check:
+
+- `ADMIN_SECRET` exists in your host settings.
+- The header is exactly `Authorization: Bearer YOUR_SECRET`.
+- You redeployed after adding the secret.
 
 ### Codes disappear locally
 
-The local fallback storage is in-memory. It resets when the dev server or function restarts.
+The in-memory development store resets when the serverless dev process restarts. Use Cloudflare KV or Vercel KV for real persistence.
 
-Use Cloudflare KV or Vercel KV for persistent production storage.
+### Success sound does not play
 
-### The success sound does not play
+Browsers sometimes block audio until user interaction. The app shows a **Tap to continue** button if needed.
 
-Browsers can block audio until user interaction. The app handles this by showing a **Tap to continue** button.
+### Cloudflare says CODES_KV is missing
 
-Also make sure `public/success.mp3` exists and is a valid MP3 file.
-
-### Vercel codes are not persistent
-
-Create and connect Vercel KV. Without `KV_REST_API_URL` and `KV_REST_API_TOKEN`, the Vercel API uses in-memory development storage.
-
-### Cloudflare says `CODES_KV` is undefined
-
-Bind your KV namespace to the Pages project with the exact binding name:
+Bind the KV namespace with the exact name:
 
 ```txt
 CODES_KV

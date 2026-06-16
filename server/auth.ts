@@ -8,14 +8,14 @@ export function isAuthorized(authorizationHeader: string | null, adminSecret: st
   }
 
   const provided = authorizationHeader.slice("Bearer ".length);
-  const a = toBytes(provided);
-  const b = toBytes(adminSecret);
+  const providedBytes = toBytes(provided);
+  const secretBytes = toBytes(adminSecret);
 
-  let diff = a.length ^ b.length;
-  const length = Math.max(a.length, b.length);
+  let diff = providedBytes.length ^ secretBytes.length;
+  const length = Math.max(providedBytes.length, secretBytes.length);
 
   for (let index = 0; index < length; index += 1) {
-    diff |= (a[index] ?? 0) ^ (b[index] ?? 0);
+    diff |= (providedBytes[index] ?? 0) ^ (secretBytes[index] ?? 0);
   }
 
   return diff === 0;

@@ -13,5 +13,11 @@
     "strict": true,
     "noEmit": true
   },
-  "include": ["src", "server", "functions", "api", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "server/**/*.ts",
+    "functions/**/*.ts",
+    "api/**/*.ts",
+    "vite.config.ts"
+  ]
 }
